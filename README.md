@@ -3,13 +3,14 @@
 A very fast static spatial index for 2D points based on a flat KD-tree.
 Compared to [RBush](https://github.com/mourner/rbush):
 
-- **Points only** — no rectangles.
-- **Static** — you can't add/remove items after initial indexing.
-- **Faster** indexing and search, with lower **memory** footprint.
-- Index is stored as a single **array buffer** (so you can [transfer](https://developer.mozilla.org/en-US/docs/Glossary/Transferable_objects) it between threads or store it as a compact file).
+### 如何实现
+- 索引是存储在单个数组缓冲区(array buffer)内,因此，您可以在线程之间[传输](https://developer.mozilla.org/en-US/docs/Glossary/Transferable_objects)它,或将其存储为紧凑文件
+### 特点
+- 目标是点：索引对象只能是点
+  - 如果需要rectangles的静态索引，而不仅仅是点的，需要[Flatbush](https://github.com/mourner/flatbush)，在索引点时，KDBush 的优点是占用的内存比 Flatbush 少 ~2 倍
+- 静态：在建立索引之后不能添加或删除元素
+- 快速：索引和查询，内存占用能少
 
-
-If you need a static index for rectangles, not only points, see [Flatbush](https://github.com/mourner/flatbush). When indexing points, KDBush has the advantage of taking ~2x less memory than Flatbush.
 
 [![Build Status](https://github.com/mourner/kdbush/workflows/Node/badge.svg?branch=master)](https://github.com/mourner/kdbush/actions)
 [![Simply Awesome](https://img.shields.io/badge/simply-awesome-brightgreen.svg)](https://github.com/mourner/projects)
@@ -17,30 +18,30 @@ If you need a static index for rectangles, not only points, see [Flatbush](https
 ## Usage
 
 ```js
-// initialize KDBush for 1000 items
+// 初始化1000个点的 KDBush 索引
 const index = new KDBush(1000);
 
-// fill it with 1000 points
+// 填充 1000 个点
 for (const {x, y} of items) {
     index.add(x, y);
 }
 
-// perform the indexing
+// 执行索引
 index.finish();
 
-// make a bounding box query
+// 执行bbox查询
 const foundIds = index.range(minX, minY, maxX, maxY);
 
-// map ids to original items
+// 将 ID 映射到原始数据
 const foundItems = foundIds.map(i => items[i]);
 
-// make a radius query
+// 执行半径查询
 const neighborIds = index.within(x, y, 5);
 
-// instantly transfer the index from a worker to the main thread
+// 立即将索引从worker传输到主线程
 postMessage(index.data, [index.data]);
 
-// reconstruct the index from a raw array buffer
+// 从原始数组缓冲区重建索引
 const index = KDBush.from(e.data);
 ```
 
