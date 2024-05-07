@@ -167,12 +167,12 @@ export default class KDBush {
 
     /**
      * Search the index for items within a given radius.
-     * @param {number} qx
-     * @param {number} qy
+     * @param {number} centerX
+     * @param {number} centerY
      * @param {number} r Query radius.
      * @returns {number[]} An array of indices correponding to the found items.
      */
-    within(qx, qy, r) {
+    within(centerX, centerY, r) {
         if (!this._finished) throw new Error('Data not yet indexed - call index.finish().');
 
         const {ids, coords, nodeSize} = this;
@@ -189,7 +189,7 @@ export default class KDBush {
             // if we reached "tree node", search linearly
             if (right - left <= nodeSize) {
                 for (let i = left; i <= right; i++) {
-                    if (sqDist(coords[2 * i], coords[2 * i + 1], qx, qy) <= r2) result.push(ids[i]);
+                    if (sqDist(coords[2 * i], coords[2 * i + 1], centerX, centerY) <= r2) result.push(ids[i]);
                 }
                 continue;
             }
@@ -200,15 +200,15 @@ export default class KDBush {
             // include the middle item if it's in range
             const x = coords[2 * m];
             const y = coords[2 * m + 1];
-            if (sqDist(x, y, qx, qy) <= r2) result.push(ids[m]);
+            if (sqDist(x, y, centerX, centerY) <= r2) result.push(ids[m]);
 
             // queue search in halves that intersect the query
-            if (axis === 0 ? qx - r <= x : qy - r <= y) {
+            if (axis === 0 ? centerX - r <= x : centerY - r <= y) {
                 stack.push(left);
                 stack.push(m - 1);
                 stack.push(1 - axis);
             }
-            if (axis === 0 ? qx + r >= x : qy + r >= y) {
+            if (axis === 0 ? centerX + r >= x : centerY + r >= y) {
                 stack.push(m + 1);
                 stack.push(right);
                 stack.push(1 - axis);
