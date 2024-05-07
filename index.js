@@ -32,29 +32,29 @@ export default class KDBush {
             throw new Error('Unrecognized array type.');
         }
         const [nodeSize] = new Uint16Array(data, 2, 1);
-        const [numItems] = new Uint32Array(data, 4, 1);
+        const [pointsNums] = new Uint32Array(data, 4, 1);
 
-        return new KDBush(numItems, nodeSize, ArrayType, data);
+        return new KDBush(pointsNums, nodeSize, ArrayType, data);
     }
 
     /**
      * Creates an index that will hold a given number of items.
-     * @param {number} numItems
+     * @param {number} pointsNums
      * @param {number} [nodeSize=64] Size of the KD-tree node (64 by default).
      * @param {TypedArrayConstructor} [ArrayType=Float64Array] The array type used for coordinates storage (`Float64Array` by default).
      * @param {ArrayBuffer} [data] (For internal use only)
      */
-    constructor(numItems, nodeSize = 64, ArrayType = Float64Array, data) {
-        if (isNaN(numItems) || numItems < 0) throw new Error(`Unexpected numItems value: ${numItems}.`);
+    constructor(pointsNums, nodeSize = 64, ArrayType = Float64Array, data) {
+        if (isNaN(pointsNums) || pointsNums < 0) throw new Error(`Unexpected pointsNums value: ${pointsNums}.`);
 
-        this.numItems = +numItems;
+        this.pointsNums = +pointsNums;
         this.nodeSize = Math.min(Math.max(+nodeSize, 2), 65535);
         this.ArrayType = ArrayType;
-        this.IndexArrayType = numItems < 65536 ? Uint16Array : Uint32Array;
+        this.IndexArrayType = pointsNums < 65536 ? Uint16Array : Uint32Array;
 
         const arrayTypeIndex = ARRAY_TYPES.indexOf(this.ArrayType);
-        const coordsByteSize = numItems * 2 * this.ArrayType.BYTES_PER_ELEMENT;
-        const idsByteSize = numItems * this.IndexArrayType.BYTES_PER_ELEMENT;
+        const coordsByteSize = pointsNums * 2 * this.ArrayType.BYTES_PER_ELEMENT;
+        const idsByteSize = pointsNums * this.IndexArrayType.BYTES_PER_ELEMENT;
         const padCoords = (8 - idsByteSize % 8) % 8;
 
         if (arrayTypeIndex < 0) {
@@ -63,21 +63,21 @@ export default class KDBush {
 
         if (data && (data instanceof ArrayBuffer)) { // reconstruct an index from a buffer
             this.data = data;
-            this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, numItems);
-            this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
-            this._pos = numItems * 2;
+            this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, pointsNums);
+            this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, pointsNums * 2);
+            this._pos = pointsNums * 2;
             this._finished = true;
         } else { // initialize a new index
             this.data = new ArrayBuffer(HEADER_SIZE + coordsByteSize + idsByteSize + padCoords);
-            this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, numItems);
-            this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
+            this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, pointsNums);
+            this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, pointsNums * 2);
             this._pos = 0;
             this._finished = false;
 
             // set header
             new Uint8Array(this.data, 0, 2).set([0xdb, (VERSION << 4) + arrayTypeIndex]);
             new Uint16Array(this.data, 2, 1)[0] = nodeSize;
-            new Uint32Array(this.data, 4, 1)[0] = numItems;
+            new Uint32Array(this.data, 4, 1)[0] = pointsNums;
         }
     }
 
@@ -100,11 +100,11 @@ export default class KDBush {
      */
     finish() {
         const numAdded = this._pos >> 1;
-        if (numAdded !== this.numItems) {
-            throw new Error(`Added ${numAdded} items when expected ${this.numItems}.`);
+        if (numAdded !== this.pointsNums) {
+            throw new Error(`Added ${numAdded} items when expected ${this.pointsNums}.`);
         }
-        // kd-sort both arrays for efficient search
-        sort(this.ids, this.coords, this.nodeSize, 0, this.numItems - 1, 0);
+        // kdSort both arrays for efficient search
+        sort(this.ids, this.coords, this.nodeSize, 0, this.pointsNums - 1, 0);
 
         this._finished = true;
         return this;
@@ -232,11 +232,10 @@ function sort(ids, coords, nodeSize, left, right, axis) {
 
     const m = (left + right) >> 1; // middle index
 
-    // sort ids and coords around the middle index so that the halves lie
-    // either left/right or top/bottom correspondingly (taking turns)
+    // 围绕中间索引对id和coords进行排序，使两半相应地位于左/右或上/下（轮流）
     select(ids, coords, m, left, right, axis);
 
-    // recursively kd-sort first half and second half on the opposite axis
+    // recursively kdSort first half and second half on the opposite axis
     sort(ids, coords, nodeSize, left, m - 1, 1 - axis);
     sort(ids, coords, nodeSize, m + 1, right, 1 - axis);
 }
