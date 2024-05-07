@@ -27,15 +27,22 @@ const coords = [
     53,49,60,50,68,57,70,56,77,63,86,71,90,52,83,71,82,72,81,94,51,75,53,95,39,78,53,88,62,84,72,77,73,99,76,73,81,88,
     87,96,98,96,82];
 
+/**
+ * 构建索引
+ * @returns {KDBush}
+ */
 function makeIndex() {
-    const index = new KDBush(points.length, 10);
-    for (const [x, y] of points) index.add(x, y);
-    return index.finish();
+    const index = new KDBush(points.length, 10);    // 构建一个空内容的索引结构
+    for (const [x, y] of points) index.add(x, y);   // 给索引结构添加点数据
+    return index.finish();  // 构建索引
 }
 
+/**
+ * 创建索引
+ */
 test('creates an index', () => {
     const index = makeIndex();
-
+    console.log('index',index);
     assert.deepEqual(Array.from(index.ids), ids, 'ids are kd-sorted');
     assert.deepEqual(Array.from(index.coords), coords, 'coords are kd-sorted');
 });

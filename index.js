@@ -13,6 +13,9 @@ export default class KDBush {
 
     /**
      * Creates an index from raw `ArrayBuffer` data.
+     * Recreates a KDBush index from raw `ArrayBuffer` data
+     * (that's exposed as `index.data` on a previously indexed KDBush instance).
+     * Very useful for transferring or sharing indices between threads or storing them in a file.
      * @param {ArrayBuffer} data
      */
     static from(data) {
@@ -40,8 +43,8 @@ export default class KDBush {
     /**
      * Creates an index that will hold a given number of items.
      * @param {number} numItems
-     * @param {number} [nodeSize=64] Size of the KD-tree node (64 by default).
-     * @param {TypedArrayConstructor} [ArrayType=Float64Array] The array type used for coordinates storage (`Float64Array` by default).
+     * @param {number} [nodeSize=64] Size of the KD-tree node (64 by default).Higher means faster indexing but slower search, and vise versa.
+     * @param {TypedArrayConstructor} [ArrayType=Float64Array] The array type used for coordinates storage (`Float64Array` by default), but if your coordinates are integer values, `Int32Array` makes the index faster and smaller.
      * @param {ArrayBuffer} [data] (For internal use only)
      */
     constructor(numItems, nodeSize = 64, ArrayType = Float64Array, data) {
@@ -82,7 +85,7 @@ export default class KDBush {
     }
 
     /**
-     * Add a point to the index.
+     * Adds a given point to the index. Returns a zero-based, incremental number that represents the newly added point.
      * @param {number} x
      * @param {number} y
      * @returns {number} An incremental index associated with the added item (starting from `0`).
@@ -96,7 +99,7 @@ export default class KDBush {
     }
 
     /**
-     * Perform indexing of the added points.
+     * 给添加的点构建索引
      */
     finish() {
         const numAdded = this._pos >> 1;
@@ -111,7 +114,7 @@ export default class KDBush {
     }
 
     /**
-     * Search the index for items within a given bounding box.
+     * Search the index for items within a given bounding box.Finds all items within the given bounding box and returns an array of indices that refer to the order the items were added (the values returned by `index.add(x, y)`).
      * @param {number} minX
      * @param {number} minY
      * @param {number} maxX
@@ -166,7 +169,7 @@ export default class KDBush {
     }
 
     /**
-     * Search the index for items within a given radius.
+     * Search the index for items within a given radius.Finds all items within a given radius from the query point and returns an array of indices.
      * @param {number} qx
      * @param {number} qy
      * @param {number} r Query radius.
