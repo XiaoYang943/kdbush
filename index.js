@@ -43,7 +43,7 @@ export default class KDBush {
     /**
      * Creates an index that will hold a given number of items.
      * @param {number} numItems
-     * @param {number} [nodeSize=64] Size of the KD-tree node (64 by default).
+     * @param {number} [nodeSize=64] KD树节点的尺寸(是KD树结果中每个区域中包含的点的个数，默认是64，在这64个点中进行搜索时采用线性遍历的方法).值越大意味着构建索引越快，但是查询越慢，反之亦然
      * @param {TypedArrayConstructor} [ArrayType=Float64Array] The array type used for coordinates storage (`Float64Array` by default).
      * @param {ArrayBuffer} [data] (For internal use only)
      */
@@ -121,16 +121,16 @@ export default class KDBush {
      * @param {number} maxY
      * @returns {number[]} An array of indices correponding to the found items.
      */
+
     range(minX, minY, maxX, maxY) {
         if (!this._finished) throw new Error('Data not yet indexed - call index.finish().');
-
         const {ids, coords, nodeSize} = this;
         const stack = [0, ids.length - 1, 0];
-        const result = [];
+        const result = [];  // 结果数组
 
         // recursively search for items in range in the kd-sorted arrays
         while (stack.length) {
-            const axis = stack.pop() || 0;
+            const axis = stack.pop() || 0;  // 轴
             const right = stack.pop() || 0;
             const left = stack.pop() || 0;
 
@@ -145,7 +145,7 @@ export default class KDBush {
             }
 
             // otherwise find the middle index
-            const m = (left + right) >> 1;
+            const m = (left + right) >> 1;  // 求 coords 数组的二分索引值
 
             // include the middle item if it's in range
             const x = coords[2 * m];
@@ -153,6 +153,13 @@ export default class KDBush {
             if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[m]);
 
             // queue search in halves that intersect the query
+            /**
+             * 由于数据都在前面的排序算法中构成了树，所以这里只需要对比中间点
+             * 判断中间点对应的x或者y（具体是x还是y要看当前循环到哪一层，单数层是x，双数层是y）是大于minx或者miny还是小于maxx或者maxy
+             * 如果是前者，则将中间点的左侧点都加入下一轮比较
+             * 如果是后者，则将中间点的右侧点都加入下一轮比较
+             * 如果两者都满足，说明当前中间点本身就在查找范围内，这时候并不能确定其左侧点或者右侧点都不在查找范围，所以将本轮中间点的左右两侧点都加入下一轮比较
+             */
             if (axis === 0 ? minX <= x : minY <= y) {
                 stack.push(left);
                 stack.push(m - 1);
@@ -237,11 +244,11 @@ function sort(ids, coords, nodeSize, left, right, axis) {
 
     // sort ids and coords around the middle index so that the halves lie
     // either left/right or top/bottom correspondingly (taking turns)
-    select(ids, coords, m, left, right, axis);
+    select(ids, coords, m, left, right, axis);  // 排序
 
     // recursively kd-sort first half and second half on the opposite axis
-    sort(ids, coords, nodeSize, left, m - 1, 1 - axis);
-    sort(ids, coords, nodeSize, m + 1, right, 1 - axis);
+    sort(ids, coords, nodeSize, left, m - 1, 1 - axis);     // 处理中间索引左侧序列
+    sort(ids, coords, nodeSize, m + 1, right, 1 - axis);    // 处理中间索引右侧序列
 }
 
 /**
@@ -301,12 +308,13 @@ function select(ids, coords, k, left, right, axis) {
  * @param {number} j
  */
 function swapItem(ids, coords, i, j) {
-    swap(ids, i, j);
-    swap(coords, 2 * i, 2 * j);
-    swap(coords, 2 * i + 1, 2 * j + 1);
+    swap(ids, i, j);    // 交换id索引
+    swap(coords, 2 * i, 2 * j); // 交换x坐标
+    swap(coords, 2 * i + 1, 2 * j + 1); // 交换y坐标
 }
 
 /**
+ * 交换数组中两个元素的位置
  * @param {InstanceType<TypedArrayConstructor>} arr
  * @param {number} i
  * @param {number} j
