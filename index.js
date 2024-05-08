@@ -43,8 +43,8 @@ export default class KDBush {
     /**
      * Creates an index that will hold a given number of items.
      * @param {number} numItems
-     * @param {number} [nodeSize=64] Size of the KD-tree node (64 by default).Higher means faster indexing but slower search, and vise versa.
-     * @param {TypedArrayConstructor} [ArrayType=Float64Array] The array type used for coordinates storage (`Float64Array` by default), but if your coordinates are integer values, `Int32Array` makes the index faster and smaller.
+     * @param {number} [nodeSize=64] Size of the KD-tree node (64 by default).
+     * @param {TypedArrayConstructor} [ArrayType=Float64Array] The array type used for coordinates storage (`Float64Array` by default).
      * @param {ArrayBuffer} [data] (For internal use only)
      */
     constructor(numItems, nodeSize = 64, ArrayType = Float64Array, data) {
@@ -85,7 +85,7 @@ export default class KDBush {
     }
 
     /**
-     * Adds a given point to the index. Returns a zero-based, incremental number that represents the newly added point.
+     * Add a point to the index.
      * @param {number} x
      * @param {number} y
      * @returns {number} An incremental index associated with the added item (starting from `0`).
@@ -114,7 +114,7 @@ export default class KDBush {
     }
 
     /**
-     * Search the index for items within a given bounding box.Finds all items within the given bounding box and returns an array of indices that refer to the order the items were added (the values returned by `index.add(x, y)`).
+     * Search the index for items within a given bounding box.
      * @param {number} minX
      * @param {number} minY
      * @param {number} maxX
@@ -169,7 +169,7 @@ export default class KDBush {
     }
 
     /**
-     * Search the index for items within a given radius.Finds all items within a given radius from the query point and returns an array of indices.
+     * Search the index for items within a given radius.
      * @param {number} qx
      * @param {number} qy
      * @param {number} r Query radius.
