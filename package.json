@@ -45,5 +45,9 @@
     "index.d.ts"
   ],
   "author": "Vladimir Agafonkin",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@turf/turf": "^6.5.0",
+    "turf": "^3.0.14"
+  }
 }
